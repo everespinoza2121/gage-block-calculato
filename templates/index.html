@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gage Block Calculator</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f4f4f4;
+    }
+    h1 {
+      color: #333;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin-top: 10px;
+      margin-right: 5px;
+    }
+    #result {
+      margin-top: 20px;
+      background: #fff;
+      padding: 15px;
+      border-radius: 5px;
+      box-shadow: 0 0 5px #ccc;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gage Block Calculator</h1>
+  <p>Enter a measurement (in inches, up to 1.0000"):</p>
+  <input type="number" id="inputValue" step="0.0001" min="0" max="1" placeholder="e.g. 0.6453">
+  <button onclick="calculate()">Calculate</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function calculate() {
+      const inputValue = document.getElementById('inputValue').value;
+      const resultDiv = document.getElementById('result');
+      if (!inputValue) {
+        resultDiv.innerText = "Please enter a value.";
+        return;
+      }
+
+      try {
+        const response = await fetch(`/gage-block?value=${inputValue}`);
+        const data = await response.json();
+        if (data.blocks && data.blocks.length > 0) {
+          resultDiv.innerHTML = `
+            <strong>Closest match:</strong> ${data.total.toFixed(4)}"<br>
+            <strong>Block combination:</strong>
+            <ul>${data.blocks.map(b => `<li>${b.toFixed(4)}"</li>`).join('')}</ul>
+          `;
+        } else {
+          resultDiv.innerText = "No combination found.";
+        }
+      } catch (err) {
+        resultDiv.innerText = "Error fetching result.";
+      }
+    }
+  </script>
+</body>
+</html>
