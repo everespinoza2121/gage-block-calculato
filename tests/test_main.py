@@ -156,6 +156,8 @@ def test_home_uses_authoritative_template(client):
     assert b"toFixed(4)" in response.data
     assert b"function stepInput(direction)" in response.data
     assert b"function parseInputMicroinches(value)" in response.data
+    assert b'step="any"' in response.data
+    assert b"updateDynamicStep" not in response.data
     assert b'event.key === "ArrowUp"' in response.data
     assert b'input.addEventListener("wheel"' in response.data
     assert b'window.location.protocol === "file:"' in response.data
@@ -175,6 +177,16 @@ def test_gage_block_route_returns_precision_safe_contract(client):
         "match_type": "exact",
         "block_count": 3,
     }
+
+
+@pytest.mark.parametrize(
+    "value",
+    [".1", ".10", "0.1", "0.10", ".9", ".90", "0.9", "0.90"],
+)
+def test_gage_block_route_accepts_one_and_two_decimal_shorthand(client, value):
+    response = client.get("/gage-block", query_string={"value": value})
+    assert response.status_code == 200
+    assert response.get_json()["target"] == f"{float(value):.6f}"
 
 
 @pytest.mark.parametrize(
