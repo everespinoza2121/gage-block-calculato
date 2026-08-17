@@ -1,66 +1,280 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Gage Block Calculator</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f4f4f4;
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #17202a;
+      background: #eef1f4;
     }
-    h1 {
-      color: #333;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 16px;
-      margin-top: 10px;
-      margin-right: 5px;
-    }
-    #result {
-      margin-top: 20px;
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 2rem 1rem; }
+    main {
+      width: min(42rem, 100%);
+      margin: 0 auto;
+      padding: 2rem;
       background: #fff;
-      padding: 15px;
-      border-radius: 5px;
-      box-shadow: 0 0 5px #ccc;
+      border-top: 0.35rem solid #d97706;
+      border-radius: 0.35rem;
+      box-shadow: 0 0.75rem 2rem rgb(15 23 42 / 10%);
+    }
+    h1 { margin: 0 0 0.35rem; font-size: clamp(1.8rem, 5vw, 2.4rem); }
+    .intro { margin: 0 0 1.5rem; color: #52606d; }
+    label { display: block; margin-bottom: 0.45rem; font-weight: 700; }
+    .input-row { display: flex; gap: 0.6rem; }
+    input, button { min-height: 2.8rem; border-radius: 0.25rem; font: inherit; }
+    input {
+      min-width: 0;
+      flex: 1;
+      padding: 0.55rem 0.7rem;
+      border: 1px solid #8995a3;
+    }
+    input:focus { outline: 3px solid rgb(217 119 6 / 25%); border-color: #b45309; }
+    button {
+      padding: 0.55rem 1rem;
+      border: 1px solid #92400e;
+      color: #fff;
+      background: #b45309;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover { background: #92400e; }
+    button:disabled { cursor: wait; opacity: 0.7; }
+    .hint { margin: 0.5rem 0 0; color: #66717e; font-size: 0.9rem; }
+    #message { min-height: 1.5rem; margin: 1rem 0 0; color: #b42318; }
+    #result {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(13rem, 1fr);
+      gap: 2rem;
+      margin-top: 1.25rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid #d8dee5;
+    }
+    #result[hidden] { display: none; }
+    #matchSummary { margin: 0 0 1rem; font-size: 1.15rem; }
+    .block-selection h3 { margin: 0 0 1rem; font-size: 1.15rem; }
+    dl {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 0.55rem 1rem;
+      margin: 0;
+    }
+    dt { color: #52606d; }
+    dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 650; }
+    #blocks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .gage-block {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 7.5rem;
+      min-height: 3.5rem;
+      padding: 0.7rem 1rem;
+      border: 1px solid #8b949e;
+      border-radius: 0.2rem;
+      color: #1f2933;
+      background: linear-gradient(145deg, #f8fafb 0%, #d8dde2 52%, #eef1f3 100%);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 85%), 0 2px 4px rgb(15 23 42 / 15%);
+      font-size: 1.1rem;
+      font-weight: 750;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.015em;
+    }
+    @media (max-width: 32rem) {
+      main { padding: 1.4rem; }
+      .input-row { flex-direction: column; }
+      #result { grid-template-columns: 1fr; gap: 1.5rem; }
+      dl { grid-template-columns: 1fr; gap: 0.2rem; }
+      dd { margin-bottom: 0.55rem; }
+      .gage-block { min-width: 6.75rem; flex: 1 1 6.75rem; }
     }
   </style>
 </head>
 <body>
-  <h1>Gage Block Calculator</h1>
-  <p>Enter a measurement (in inches, up to 1.0000"):</p>
-  <input type="number" id="inputValue" step="0.0001" min="0" max="1" placeholder="e.g. 0.6453">
-  <button onclick="calculate()">Calculate</button>
+  <main>
+    <h1>Gage Block Calculator</h1>
+    <p class="intro">Find the closest practical stack from the modeled inch block set.</p>
 
-  <div id="result"></div>
+    <form id="calculatorForm">
+      <label for="inputValue">Target measurement (inches)</label>
+      <div class="input-row">
+        <input
+          id="inputValue"
+          name="value"
+          type="number"
+          inputmode="decimal"
+          min="0.05"
+          max="1"
+          step="0.000001"
+          placeholder="0.645300"
+          required
+        >
+        <button id="calculateButton" type="submit">Calculate stack</button>
+      </div>
+      <p class="hint">Supported range: 0.050000–1.000000 in, up to six decimal places.</p>
+    </form>
+
+    <p id="message" role="alert"></p>
+
+    <section id="result" aria-live="polite" hidden>
+      <div class="result-summary">
+        <h2 id="matchSummary"></h2>
+        <dl>
+          <dt>Target</dt>
+          <dd><span id="target"></span> in</dd>
+          <dt>Actual total</dt>
+          <dd><span id="total"></span> in</dd>
+          <dt>Deviation</dt>
+          <dd><span id="deviation"></span> in</dd>
+        </dl>
+      </div>
+      <div class="block-selection">
+        <h3>Use these blocks</h3>
+        <div id="blocks" role="list" aria-label="Gage blocks to use"></div>
+      </div>
+    </section>
+  </main>
 
   <script>
-    async function calculate() {
-      const inputValue = document.getElementById('inputValue').value;
-      const resultDiv = document.getElementById('result');
-      if (!inputValue) {
-        resultDiv.innerText = "Please enter a value.";
-        return;
-      }
+    const form = document.getElementById("calculatorForm");
+    const input = document.getElementById("inputValue");
+    const button = document.getElementById("calculateButton");
+    const message = document.getElementById("message");
+    const result = document.getElementById("result");
+
+    function displayInches(value, showPositiveSign = false) {
+      const numericValue = Number(value);
+      const magnitude = Math.abs(numericValue).toFixed(4).replace(/^0(?=\.)/, "");
+      if (numericValue < 0) return `-${magnitude}`;
+      if (showPositiveSign && numericValue > 0) return `+${magnitude}`;
+      return magnitude;
+    }
+
+    function inputPrecision(value) {
+      const decimalPoint = value.indexOf(".");
+      return decimalPoint === -1 ? 0 : value.length - decimalPoint - 1;
+    }
+
+    function parseInputMicroinches(value) {
+      const [whole = "0", fraction = ""] = value.split(".");
+      return Number(whole || "0") * 1000000 +
+        Number(fraction.padEnd(6, "0"));
+    }
+
+    function formatInputMicroinches(microinches, precision, omitLeadingZero) {
+      const whole = Math.floor(microinches / 1000000);
+      if (precision === 0) return String(whole);
+
+      const fraction = String(microinches % 1000000)
+        .padStart(6, "0")
+        .slice(0, precision);
+      const wholeDisplay = omitLeadingZero && whole === 0 ? "" : String(whole);
+      return `${wholeDisplay}.${fraction}`;
+    }
+
+    function updateDynamicStep() {
+      const precision = inputPrecision(input.value);
+      input.step = precision === 0
+        ? "1"
+        : `0.${"0".repeat(precision - 1)}1`;
+    }
+
+    function stepInput(direction) {
+      const value = input.value.trim();
+      if (!/^(?:[0-9]+(?:\.[0-9]{1,6})?|\.[0-9]{1,6})$/.test(value)) return;
+
+      const precision = inputPrecision(value);
+      const stepMicroinches = 10 ** (6 - precision);
+      const currentMicroinches = parseInputMicroinches(value);
+      const nextMicroinches = Math.min(
+        1000000,
+        Math.max(50000, currentMicroinches + direction * stepMicroinches)
+      );
+
+      input.value = formatInputMicroinches(
+        nextMicroinches,
+        precision,
+        value.startsWith(".")
+      );
+      updateDynamicStep();
+    }
+
+    input.addEventListener("input", updateDynamicStep);
+    input.addEventListener("focus", updateDynamicStep);
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+      event.preventDefault();
+      stepInput(event.key === "ArrowUp" ? 1 : -1);
+    });
+    input.addEventListener("wheel", (event) => {
+      if (document.activeElement !== input || event.deltaY === 0) return;
+      event.preventDefault();
+      stepInput(event.deltaY < 0 ? 1 : -1);
+    }, { passive: false });
+    input.addEventListener("mousedown", (event) => {
+      const spinnerWidth = 24;
+      if (event.offsetX < input.clientWidth - spinnerWidth) return;
+      event.preventDefault();
+      input.focus();
+      stepInput(event.offsetY < input.clientHeight / 2 ? 1 : -1);
+    });
+
+    if (window.location.protocol === "file:") {
+      message.textContent =
+        "This calculator must be served by Flask. Run python3 main.py and open http://127.0.0.1:5000/.";
+      button.disabled = true;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      message.textContent = "";
+      result.hidden = true;
+      button.disabled = true;
+
+      const value = input.value;
+      const query = new URLSearchParams({ value });
 
       try {
-        const response = await fetch(`/gage-block?value=${inputValue}`);
+        const response = await fetch(`/gage-block?${query}`);
         const data = await response.json();
-        if (data.blocks && data.blocks.length > 0) {
-          resultDiv.innerHTML = `
-            <strong>Closest match:</strong> ${data.total.toFixed(4)}"<br>
-            <strong>Block combination:</strong>
-            <ul>${data.blocks.map(b => `<li>${b.toFixed(4)}"</li>`).join('')}</ul>
-          `;
-        } else {
-          resultDiv.innerText = "No combination found.";
+        if (!response.ok) {
+          throw new Error(data.error || "Unable to calculate a stack.");
         }
-      } catch (err) {
-        resultDiv.innerText = "Error fetching result.";
+
+        const descriptions = {
+          exact: "Exact match",
+          above: "Closest stack is above target",
+          below: "Closest stack is below target"
+        };
+        document.getElementById("matchSummary").textContent = descriptions[data.match_type];
+        document.getElementById("target").textContent = displayInches(data.target);
+        document.getElementById("total").textContent = displayInches(data.total);
+        document.getElementById("deviation").textContent =
+          displayInches(data.deviation, true);
+
+        const blockList = document.getElementById("blocks");
+        blockList.replaceChildren();
+        for (const block of data.blocks) {
+          const item = document.createElement("div");
+          item.className = "gage-block";
+          item.setAttribute("role", "listitem");
+          item.textContent = `${displayInches(block)} in`;
+          blockList.appendChild(item);
+        }
+        result.hidden = false;
+      } catch (error) {
+        message.textContent = error.message || "Unable to contact the calculator.";
+      } finally {
+        button.disabled = false;
       }
-    }
+    });
   </script>
 </body>
 </html>
