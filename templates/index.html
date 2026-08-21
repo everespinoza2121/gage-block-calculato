@@ -12,7 +12,7 @@
       background: #eef1f4;
     }
     * { box-sizing: border-box; }
-    body { position: relative; margin: 0; min-height: 100vh; padding: 2rem 1rem 4rem; }
+    body { margin: 0; padding: 2rem 1rem; }
     main {
       width: min(42rem, 100%);
       margin: 0 auto;
@@ -88,10 +88,7 @@
       letter-spacing: 0.015em;
     }
     .maker-signature {
-      position: absolute;
-      left: clamp(1rem, 3vw, 2rem);
-      bottom: clamp(1rem, 3vw, 1.5rem);
-      margin: 0;
+      margin: 1.5rem 0 0;
       color: #7b8794;
       font-size: 0.75rem;
       letter-spacing: 0.015em;
@@ -149,9 +146,9 @@
         <div id="blocks" role="list" aria-label="Gage blocks to use"></div>
       </div>
     </section>
-  </main>
 
-  <footer class="maker-signature">Built by Ever Espinoza · 2026</footer>
+    <footer class="maker-signature">Built by Ever Espinoza · 2026</footer>
+  </main>
 
   <script>
     const form = document.getElementById("calculatorForm");

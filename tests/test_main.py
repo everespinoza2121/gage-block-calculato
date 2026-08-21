@@ -164,6 +164,13 @@ def test_home_uses_authoritative_template(client):
     assert b"This calculator must be served by Flask" in response.data
     assert b'class="maker-signature"' in response.data
     assert b"Built by Ever Espinoza \xc2\xb7 2026" in response.data
+    result_position = response.data.index(b'id="result"')
+    signature_position = response.data.index(b'class="maker-signature"')
+    main_end_position = response.data.index(b"</main>")
+    assert result_position < signature_position < main_end_position
+    assert b"position: absolute" not in response.data
+    assert b"position: fixed" not in response.data
+    assert b"position: sticky" not in response.data
 
 
 def test_gage_block_route_returns_precision_safe_contract(client):
