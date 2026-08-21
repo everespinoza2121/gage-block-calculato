@@ -162,6 +162,8 @@ def test_home_uses_authoritative_template(client):
     assert b'input.addEventListener("wheel"' in response.data
     assert b'window.location.protocol === "file:"' in response.data
     assert b"This calculator must be served by Flask" in response.data
+    assert b'class="maker-signature"' in response.data
+    assert b"Built by Ever Espinoza \xc2\xb7 2026" in response.data
 
 
 def test_gage_block_route_returns_precision_safe_contract(client):
